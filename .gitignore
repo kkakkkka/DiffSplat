@@ -1,0 +1,11 @@
+__pycache__/
+build/
+*.egg-info/
+out/
+temp/
+log/
+download/*.json
+download/*.csv
+temp*.*
+*.tar*
+*.vsix
