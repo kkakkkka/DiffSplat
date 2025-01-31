@@ -1,0 +1,1278 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="Repurposing large text-to-image diffusion models to directly generate 3D content from text prompts and single-view images.">
+  <meta name="keywords" content="DiffSplat, 3D generative model, 3D Gaussian Splatting, ICLR 2025">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DiffSplat</title>
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PYVRSFMDRL"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+
+    gtag('js', new Date());
+
+    gtag('config', 'G-PYVRSFMDRL');
+  </script>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+
+  <link rel="icon" href="./static/images/crab.png">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+</head>
+
+
+<style>
+  .morphing-text {
+      background-image: linear-gradient(to right, 
+        #12f3ec 0%, #2277e6 25%, #cc00d3 75%, #f10fed 100%
+      );
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+  }
+  .center-img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+</style>
+
+
+<body>
+
+  <!-- Section 1: Banner -->
+  <section class="hero">
+    <div class="hero-body">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column has-text-centered">
+
+            <!-- Title -->
+            <h1 class="title is-2 publication-title">
+              <span class="morphing-text model-name">DiffSplat</span>:
+              <span>Repurposing Image Diffusion Models for Scalable 3D Gaussian Splat Generation</span>
+            </h1>
+
+            <!-- Publication Info -->
+            <h2 class="subtitle is-5 publication-info">
+              International Conference on Learning Representations (<b>ICLR</b>) 2025<br>
+            </h2>
+
+            <!-- Authors -->
+            <div class="is-size-5 publication-authors">
+              <span class="author-block">
+                <a href="https://chenguolin.github.io">Chenguo Lin</a><sup>1</sup>,
+              </span>
+              <span class="author-block">
+                <a href="https://paulpanwang.github.io">Panwang Pan</a><sup>2†</sup>,
+              </span>
+              <span class="author-block">
+                <a href="https://ybbbbt.com">Bangbang Yang</a><sup>2</sup>,
+              </span>
+              <span class="author-block">
+                <a href="https://www.zemingli.com">Zeming Li</a><sup>2</sup>,
+              </span>
+              <span class="author-block">
+                <a href="http://www.muyadong.com">Yadong Mu</a><sup>1‡</sup>
+              </span>
+            </div>
+
+            <!-- Affiliations -->
+            <div class="is-size-5 publication-authors">
+              <span class="author-block"><sup>1</sup>Peking University</span> &nbsp;
+              <span class="author-block"><sup>2</sup>ByteDance</span>
+            </div>
+
+            <!-- Author Notes -->
+            <div class="is-size-6 publication-authors">
+              <span class="author-block">† denotes project leader, ‡ denotes corresponding author</span>
+            </div>
+
+            <!-- Links -->
+            <div class="column has-text-centered">
+              <div class="publication-links">
+                <!-- OpenReview Link -->
+                <span class="link-block">
+                  <a href="https://openreview.net/forum?id=eajZpoQkGK"
+                    class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fas fa-file-alt"></i></span>
+                    <span>OpenReview</span>
+                  </a>
+                </span>
+                <!-- ArXiv Link -->
+                <span class="link-block">
+                  <a href="https://arxiv.org/abs/2501.16764"
+                    class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="ai ai-arxiv"></i></span>
+                    <span>arXiv</span>
+                  </a>
+                </span>
+                <!-- Code Link -->
+                <span class="link-block">
+                  <a href="https://github.com/chenguolin/DiffSplat"
+                    class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fab fa-github"></i></span>
+                    <span>Code</span>
+                  </a>
+                </span>
+                <!-- Model Link -->
+                <span class="link-block">
+                  <a href="https://huggingface.co/chenguolin/DiffSplat"
+                    class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fas fa-database"></i></span>
+                    <span>Model</span>
+                  </a>
+                </span>
+                <!-- Demo Link -->
+                <span class="link-block">
+                  <a href="https://huggingface.co/spaces/chenguolin/DiffSplat"
+                    class="external-link button is-normal is-rounded is-dark" disabled>
+                    <span class="icon"><i class="fas fa-magic"></i></span>
+                    <span>Demo</span>
+                  </a>
+                </span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 2: Teaser -->
+  <section class="hero teaser">
+    <div class="container is-max-desktop">
+      <div class="hero-body">
+
+        <video src="./static/images/teaser_scrolling.mp4" autoplay loop muted></video>
+        <h2 class="subtitle has-text-centered">
+          <span class="morphing-text model-name"><b>DiffSplat</b></span> is
+          a generative framework to synthesize 3D Gaussian Splats from <u>text prompts</u> & <u>single-view images</u> in ⚡️ <u><b>1~2 seconds</b></u>.
+          It is <span class="morphing-text"><b>fine-tuned directly from a pretrained text-to-image diffusion model</b></span>.
+        </h2>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: Main Demo -->
+  <!-- <section class="hero is-light is-small">
+    <video src="./static/images/teaser_scrolling.mp4" autoplay loop muted></video>
+  </section> -->
+
+  <!-- Section 4: Abstract -->
+  <section class="section">
+    <div class="container is-max-desktop">
+
+      <!-- Abstract -->
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3">🧩&nbsp;&nbsp; Abstract &nbsp;&nbsp;🧩</h2>
+          <div class="content has-text-justified">
+            <p>
+              Recent advancements in 3D content generation from text or a single image struggle with limited high-quality 3D datasets and inconsistency from 2D multi-view generation.
+              We introduce <span class="morphing-text model-name"><b>DiffSplat</b></span>, a novel 3D generative framework that <span class="morphing-text"><b>natively generates 3D Gaussians by taming large-scale text-to-image diffusion models</b></span>.
+            </p>
+            <p>
+              It differs from previous 3D generative models by <u><b>effectively utilizing web-scale 2D priors</b></u> while <u><b>maintaining 3D consistency</b></u> in a unified model.
+              To bootstrap the training, <em>a lightweight reconstruction model</em> is proposed to instantly produce multiview Gaussian grids for scalable dataset curation.
+              In conjunction with the regular diffusion loss on these grids, <em>a 3D rendering loss</em> is introduced to facilitate 3D coherence across arbitrary views.
+            </p>
+            <p>
+              The compatibility with image diffusion models enables <u>seamless adaptions of numerous techniques for image generation to the 3D realm</u>.
+              Extensive experiments reveal the superiority of <span class="morphing-text model-name"><b>DiffSplat</b></span> in <u>text- and image-conditioned generation</u> tasks and downstream applications.
+              Thorough ablation studies validate the efficacy of each critical design choice and provide insights into the underlying mechanism.
+              Code and models are publicly available at <a href="https://github.com/chenguolin/DiffSplat">here</a>.
+            </p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Section 5: Method -->
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column is-full-width">
+
+          <h2 class="title is-3 has-text-centered">🎯&nbsp;&nbsp; Motivation &nbsp;&nbsp;🎯</h2>
+          <div class="content has-text-justified">
+            <img src="./static/images/pipeline.png" width="80%" class="center-img"/>
+            <p>
+              (1) <u><b>Native 3D</b></u> methods (such as
+                <a href="https://sites.google.com/view/clay-3dlm">CLAY</a>,
+                <a href="https://sotamak1r.github.io/gvgen">GVGEN</a> and
+                <a href="https://gaussiancube.github.io">GaussianCube</a>)
+                require extra time-intensive preprocessing for training data curation and
+                face limitations in leveraging pretrained 2D models, posing great challenges to
+                the quality and scale of 3D datasets, as well as the efficiency of 3D network training from scratch.
+            </p>
+            <p>
+              (2) <u><b>Rendering-based</b></u> methods (such as
+              <a href="https://github.com/facebookresearch/holo_diffusion">HoloDiffusion</a>,
+              <a href="https://szymanowiczs.github.io/viewset-diffusion">Viewset Diffusion</a>
+              and
+              <a href="https://justimyhxu.github.io/projects/dmv3d">DMV3D</a>)
+              only need multi-view images for supervision, but suffer from unstable training and the same drawback of native 3D methods
+              that can't leverate pretrained 2D generative priors.
+            </p>
+            <p>
+              (3) <u><b>Reconstruction-based</b></u> methods (such as
+              <a href="https://me.kiui.moe/lgm">LGM</a>,
+              <a href="https://assetgen.github.io">Meta 3D AssetGen</a> and
+              <a href="https://meshformer3d.github.io">MeshFormer</a>)
+              leverage 2D priors by utilizing frozen image diffusion models to generate multiview images with generalizable 3D reconstruction models.
+              However, they regard the multi-view diffusion model as an independent plug-and-play module,
+              so 3D generation is conducted as a two-stage proceeding, which requires
+              extra network parameters and may collapse due to the 3D inconsistency in generated images.
+            </p>
+            <p>
+              (4) Inheriting the advantages of these three kinds of methods, <b><span class="morphing-text model-name">DiffSplat</span> fine-tunes pretrained image diffusion models for
+              direct 3DGS generation, effectively utilizing 2D diffusion priors and maintaining 3D consistency</b>.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 5: Method -->
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column is-full-width">
+
+          <h2 class="title is-3 has-text-centered">🔮&nbsp;&nbsp; Method &nbsp;&nbsp;🔮</h2>
+          <div class="content has-text-justified">
+            <img src="./static/images/overview.png" width="100%" class="center-img"/>
+            <p>
+              (1) <u><b>Data Curation: Structured Gaussian Reconstruction</b></u>:
+              A lightweight reconstruction model provides high-quality structured Gaussian representation for "pseudo" dataset curation.
+              (2) <u><b>Gaussian Latents</b></u>:
+              Image VAE is fine-tuned to encode Gaussian properties into a shared latent space.
+              (3) <span class="morphing-text model-name"><b>DiffSplat</b></span>
+              is natively capable of generating 3D contents by image and text conditions
+              utilizing 2D priors from text-to-image diffusion models.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 6: T23D Results -->
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column is-full-width">
+
+          <h2 class="title is-3 has-text-centered">📝&nbsp;&nbsp; Text-to-3D Generation &nbsp;&nbsp;📝</h2>
+          <div class="content has-text-justified">
+            <p>
+              <!-- Text prompts are taken from <a href="https://t3bench.com">T3Bench</a> and
+              <a href="https://instant-3d.github.io">Instant3D</a>. -->
+              Text prompts are taken from <a href="https://t3bench.com">T3Bench</a>,
+              <a href="https://instant-3d.github.io">Instant3D</a> and
+              <a href="https://research.nvidia.com/labs/toronto-ai/LATTE3D">LATTE3D</a>.
+            </p>
+          </div>
+
+          <div style="text-align:center">
+            <table style="width: 100%">
+              <tbody>
+
+                <!-- <tr class="result-row">
+                  <td><video src="./static/images/t23d/1.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/t23d/2.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/t23d/3.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/t23d/4.mp4" width="80%" autoplay loop muted></video></td>
+                </tr>
+                <tr class="prompt-row">
+                    <td>A cactus with pink flowers</td>
+                    <td>A ceramic teapot with floral patterns</td>
+                    <td>A classic leatherette radio with dials</td>
+                    <td>A white swan on a tranquil lake</td>
+                </tr>
+                <tr class="result-row">
+                  <td><video src="./static/images/t23d/5.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/t23d/6.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/t23d/7.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/t23d/8.mp4" width="80%" autoplay loop muted></video></td>
+                </tr>
+                <tr class="prompt-row">
+                    <td>A bright, yellow rubber duck</td>
+                    <td>A fluffy, orange cat</td>
+                    <td>A plush velvet armchair</td>
+                    <td>A well-worn straw sun hat</td>
+                </tr>
+                <tr class="result-row">
+                  <td><video src="./static/images/t23d/9.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/t23d/10.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/t23d/11.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/t23d/12.mp4" width="80%" autoplay loop muted></video></td>
+                </tr>
+                <tr class="prompt-row">
+                    <td>A silver teapot on a dining table</td>
+                    <td>A candle burns beside an ancient, leather-bound book</td>
+                    <td>A red cardinal on a snowy branch</td>
+                    <td>A dog made out of salad</td>
+                </tr>
+                <tr class="result-row">
+                  <td><video src="./static/images/t23d/13.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/t23d/14.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/t23d/15.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/t23d/16.mp4" width="80%" autoplay loop muted></video></td>
+                </tr>
+                <tr class="prompt-row">
+                    <td>A pigeon reading a book</td>
+                    <td>A beautiful rainbow fish</td>
+                    <td>An ice cream sundae</td>
+                    <td>Michelangelo style statue of dog reading news on a cellphone</td>
+                </tr>
+                <tr class="result-row">
+                  <td><video src="./static/images/t23d/17.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/t23d/18.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/t23d/19.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/t23d/20.mp4" width="80%" autoplay loop muted></video></td>
+                </tr>
+                <tr class="prompt-row">
+                    <td>A white seashell on a sandy beach</td>
+                    <td>A silver spoon in a bowl of soup</td>
+                    <td>A bluebird perched on a tree branch</td>
+                    <td>A red rose in a crystal vase</td>
+                </tr>
+                <tr class="result-row">
+                  <td><video src="./static/images/t23d/21.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/t23d/22.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/t23d/23.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/t23d/24.mp4" width="80%" autoplay loop muted></video></td>
+                </tr>
+                <tr class="prompt-row">
+                    <td>A colorful parrot on a jungle tree</td>
+                    <td>A blue butterfly on a pink flower</td>
+                    <td>A white cotton t-shirt hanging on a wooden hanger</td>
+                    <td>A delicate china teacup resting on a lace doily</td>
+                </tr>
+                <tr class="result-row">
+                  <td><video src="./static/images/t23d/25.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/t23d/26.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/t23d/27.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/t23d/28.mp4" width="80%" autoplay loop muted></video></td>
+                </tr>
+                <tr class="prompt-row">
+                    <td>A golden retriever with a blue bowtie</td>
+                    <td>A vibrant sunflower with green leaves</td>
+                    <td>A pair of worn-in blue jeans</td>
+                    <td>A gold glittery carnival mask</td>
+                </tr>
+                <tr class="result-row">
+                  <td><video src="./static/images/t23d/29.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/t23d/30.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/t23d/31.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/t23d/32.mp4" width="80%" autoplay loop muted></video></td>
+                </tr>
+                <tr class="prompt-row">
+                    <td>A fuzzy pink flamingo lawn ornament</td>
+                    <td>A fragrant pine Christmas wreath</td>
+                    <td>A small porcelain white rabbit figurine</td>
+                    <td>A silver mirror with ornate detailing</td>
+                </tr> -->
+
+                <tr class="result-row">
+                  <td><video src="./static/images/results/t23d/1.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/t23d/2.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/t23d/3.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/t23d/4.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                </tr>
+                <tr class="prompt-row">
+                  <td>A beautiful rainbow fish</td>
+                  <td>A bright red fire hydrant</td>
+                  <td>A brown horse in a green pasture</td>
+                  <td>A colorful camping tent in a patch of grass</td>
+                </tr>
+                <tr class="result-row">
+                  <td><video src="./static/images/results/t23d/5.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/t23d/6.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/t23d/7.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/t23d/8.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                </tr>
+                <tr class="prompt-row">
+                  <td>A fluffy, orange cat</td>
+                  <td>A green enameled watering can</td>
+                  <td>A green frog on a lily pad</td>
+                  <td>A human skull</td>
+                </tr>
+                <tr class="result-row">
+                  <td><video src="./static/images/results/t23d/9.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/t23d/10.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/t23d/11.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/t23d/12.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                </tr>
+                <tr class="prompt-row">
+                  <td>A jar of homemade jam</td>
+                  <td>A lighthouse on a rocky shore</td>
+                  <td>A plush velvet armchair</td>
+                  <td>A red cardinal on a snowy branch</td>
+                </tr>
+                <tr class="result-row">
+                  <td><video src="./static/images/results/t23d/13.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/t23d/14.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/t23d/15.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/t23d/16.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                </tr>
+                <tr class="prompt-row">
+                  <td>A red rose in a crystal vase</td>
+                  <td>A silver mirror with ornate detailing</td>
+                  <td>A small porcelain white rabbit figurine</td>
+                  <td>A toy robot</td>
+                </tr>
+                <tr class="result-row">
+                  <td><video src="./static/images/results/t23d/17.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/t23d/18.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/t23d/19.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/t23d/20.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                </tr>
+                <tr class="prompt-row">
+                  <td>A tree stump with an axe buried in it</td>
+                  <td>A velvet cushion stitched with golden threads</td>
+                  <td>A vibrant orange pumpkin sitting on a hay bale</td>
+                  <td>A vintage porcelain doll with a frilly dress</td>
+                </tr>
+                <tr class="result-row">
+                  <td><video src="./static/images/results/t23d/21.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/t23d/22.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/t23d/23.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/t23d/24.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                </tr>
+                <tr class="prompt-row">
+                  <td>A well-loved stuffed teddy bear</td>
+                  <td>A worn-out red flannel shirt</td>
+                  <td>An expensive office chair</td>
+                  <td>An intricate ceramic vase with peonies painted on it</td>
+                </tr>
+
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 7: I23D Results -->
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column is-full-width">
+
+          <h2 class="title is-3 has-text-centered">🖼️&nbsp;&nbsp; Image-to-3D Generation &nbsp;&nbsp;🖼️</h2>
+          <div class="content has-text-justified">
+            <p>
+              <!-- Single-view images are taken from <a href="https://github.com/TencentARC/InstantMesh">InstantMesh</a>,
+              <a href="https://penghtyx.github.io/Era3D">Era3D</a>, <a href="https://gpteval3d.github.io">GPTEval3D</a> and the Internet. -->
+              Single-view images are taken from <a href="https://github.com/TencentARC/InstantMesh">InstantMesh</a>,
+              <a href="https://penghtyx.github.io/Era3D">Era3D</a>,
+              <a href="https://gpteval3d.github.io">GPTEval3D</a> and the Internet.
+            </p>
+          </div>
+
+          <div style="text-align:center">
+            <table style="width: 100%">
+              <tbody>
+
+                <!-- <tr class="result-row">
+                  <td><video src="./static/images/i23d/1.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d/2.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d/3.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d/4.mp4" width="80%" autoplay loop muted></video></td>
+                </tr>
+                <tr class="result-row">
+                  <td><video src="./static/images/i23d/5.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d/6.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d/7.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d/8.mp4" width="80%" autoplay loop muted></video></td>
+                </tr>
+                <tr class="result-row">
+                  <td><video src="./static/images/i23d/9.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d/10.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d/11.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d/12.mp4" width="80%" autoplay loop muted></video></td>
+                </tr>
+                <tr class="result-row">
+                  <td><video src="./static/images/i23d/13.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d/14.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d/15.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d/16.mp4" width="80%" autoplay loop muted></video></td>
+                </tr>
+                <tr class="result-row">
+                  <td><video src="./static/images/i23d/17.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d/18.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d/19.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d/20.mp4" width="80%" autoplay loop muted></video></td>
+                </tr>
+                <tr class="result-row">
+                  <td><video src="./static/images/i23d/21.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d/22.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d/23.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d/24.mp4" width="80%" autoplay loop muted></video></td>
+                </tr>
+                <tr class="result-row">
+                  <td><video src="./static/images/i23d/25.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d/26.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d/27.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d/28.mp4" width="80%" autoplay loop muted></video></td>
+                </tr>
+                <tr class="result-row">
+                  <td><video src="./static/images/i23d/29.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d/30.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d/31.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d/32.mp4" width="80%" autoplay loop muted></video></td>
+                </tr> -->
+
+                <tr class="result-row">
+                  <td><video src="./static/images/results/i23d/1.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/i23d/2.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/i23d/3.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/i23d/4.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                </tr>
+                <tr class="result-row">
+                  <td><video src="./static/images/results/i23d/5.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/i23d/6.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/i23d/7.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/i23d/8.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                </tr>
+                <tr class="result-row">
+                  <td><video src="./static/images/results/i23d/9.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/i23d/10.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/i23d/11.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/i23d/12.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                </tr>
+                <tr class="result-row">
+                  <td><video src="./static/images/results/i23d/13.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/i23d/14.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/i23d/15.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/i23d/16.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                </tr>
+                <tr class="result-row">
+                  <td><video src="./static/images/results/i23d/17.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/i23d/18.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/i23d/19.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/i23d/20.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                </tr>
+                <tr class="result-row">
+                  <td><video src="./static/images/results/i23d/21.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/i23d/22.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/i23d/23.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/results/i23d/24.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                </tr>
+
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 8: Controllable Results -->
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column is-full-width">
+
+          <h2 class="title is-3 has-text-centered">🕹️&nbsp;&nbsp; Controllable Generation &nbsp;&nbsp;🕹️</h2>
+
+          <h3 class="title is-4">ControlNet for <span class="morphing-text model-name">DiffSplat</span></h3>
+          <div style="text-align:center; margin-bottom: 20px">
+            <table style="width: 100%">
+              <tbody>
+                <tr class="result-row">
+                  <td><img src="./static/images/controlnet/normal-original.png"></td>
+                  <td><img src="./static/images/controlnet/normal-input.png"></td>
+                  <td><video src="./static/images/controlnet/normal-1.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/controlnet/normal-2.mp4" width="80%" autoplay loop muted></video></td>
+                </tr>
+                <tr class="prompt-row">
+                  <td>Original Object</td>
+                  <td>Normal Map</td>
+                  <td>A steampunk robot with brass gears and steam pipes</td>
+                  <td>A cute cartoon robot with oversized eyes</td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div style="text-align:center; margin-bottom: 20px">
+            <table style="width: 100%">
+              <tbody>
+                <tr class="result-row">
+                  <td><img src="./static/images/controlnet/depth-original.png"></td>
+                  <td><img src="./static/images/controlnet/depth-input.png"></td>
+                  <td><video src="./static/images/controlnet/depth-1.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/controlnet/depth-2.mp4" width="80%" autoplay loop muted></video></td>
+                </tr>
+                <tr class="prompt-row">
+                  <td>Original Object</td>
+                  <td>Depth Map</td>
+                  <td>A Santa festive plush bear toy</td>
+                  <td>An adorable baby panda</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div style="text-align:center; margin-bottom: 50px">
+            <table style="width: 100%">
+              <tbody>
+                <tr class="result-row">
+                  <td><img src="./static/images/controlnet/canny-original.png"></td>
+                  <td><img src="./static/images/controlnet/canny-input.png"></td>
+                  <td><video src="./static/images/controlnet/canny-1.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/controlnet/canny-2.mp4" width="80%" autoplay loop muted></video></td>
+                </tr>
+                <tr class="prompt-row">
+                  <td>Original Object</td>
+                  <td>Canny Edge</td>
+                  <td>An ancient, leather-bound magic book with shimmering gold leaf pages</td>
+                  <td>A slice of freshly baked bread with a golden crusty exterior and a soft interior</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 class="title is-4">Text-guided Reconstruction with <span class="morphing-text model-name">DiffSplat</span></h3>
+          <div style="text-align:center; margin-bottom: 20px">
+            <table style="width: 100%">
+              <tbody>
+                <tr class="result-row">
+                  <td><video src="./static/images/i23d_text/1.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d_text/2.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d_text/3.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d_text/4.mp4" width="80%" autoplay loop muted></video></td>
+                </tr>
+                <tr class="prompt-row" style="font-size: 20px">
+                  <td>A sculpture</td>
+                  <td>A mask</td>
+                  <td>A headwear</td>
+                  <td>A flat rock</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div style="text-align:center">
+            <table style="width: 100%">
+              <tbody>
+                <tr class="result-row">
+                  <td><video src="./static/images/i23d_text/5.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d_text/6.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d_text/7.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/i23d_text/8.mp4" width="80%" autoplay loop muted></video></td>
+                </tr>
+                <tr class="prompt-row" style="font-size: 20px">
+                  <td>A pencil box</td>
+                  <td>A small purse</td>
+                  <td>A ball</td>
+                  <td>A flat badge</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 9: Ablation Results -->
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column is-full-width">
+
+          <h2 class="title is-3 has-text-centered">🛠️&nbsp;&nbsp; Ablation Studies &nbsp;&nbsp;🛠️</h2>
+
+          <h3 class="title is-4"><span class="morphing-text model-name">DiffSplat</span> Design Choices</h3>
+          <div class="content has-text-justified">
+            <img src="./static/images/ablation.png" width="100%" class="center-img"/>
+          </div>
+
+          <h3 class="title is-4">Effectiveness of Rendering Loss</h3>
+          <div style="text-align:center; margin-bottom: 20px">
+            <table style="width: 100%">
+              <tbody>
+                <tr class="prompt-row" style="font-size: 20px">
+                  <td><p style="color: green">With</p> Rendering Loss</td>
+                  <td><p style="color: red">Without</p> Rendering Loss</td>
+                  <td><p style="color: green">With</p> Rendering Loss</td>
+                  <td><p style="color: red">Without</p> Rendering Loss</td>
+                </tr>
+                <tr class="result-row">
+                  <td><video src="./static/images/rloss/t23d-1-w.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/rloss/t23d-1-wo.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/rloss/t23d-2-w.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/rloss/t23d-2-wo.mp4" width="80%" autoplay loop muted></video></td>
+                </tr>
+                <tr class="prompt-row" style="font-size: 20px">
+                  <td colspan="2">A plush dragon toy</td>
+                  <td colspan="2">An old car overgrown by vines and weeds</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div style="text-align:center">
+            <table style="width: 100%">
+              <tbody>
+                <tr class="prompt-row" style="font-size: 20px">
+                  <td><p style="color: green">With</p> Rendering Loss</td>
+                  <td><p style="color: red">Without</p> Rendering Loss</td>
+                  <td><p style="color: green">With</p> Rendering Loss</td>
+                  <td><p style="color: red">Without</p> Rendering Loss</td>
+                </tr>
+                <tr class="result-row">
+                  <td><video src="./static/images/rloss/i23d-1-w.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/rloss/i23d-1-wo.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/rloss/i23d-2-w.mp4" width="80%" autoplay loop muted></video></td>
+                  <td><video src="./static/images/rloss/i23d-2-wo.mp4" width="80%" autoplay loop muted></video></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 10: Appendix -->
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column is-full-width">
+
+          <h2 class="title is-3 has-text-centered">🎨&nbsp;&nbsp; More Results &nbsp;&nbsp;🎨</h2>
+
+          <h3 class="title is-4 has-text-centered">
+            A. Compared with <a href="https://hyperhuman.deemos.com/rodin">CLAY (Rodin Gen-1)</a>
+          </h3>
+
+          <div class="content has-text-justified">
+            <p>
+              We evaluated a <b>commercial product</b> named <a href="https://hyperhuman.deemos.com/rodin">Rodin</a>
+              via membership subscription on its website, which is based on the
+              CLAY technique, since <a href="https://sites.google.com/view/clay-3dlm">CLAY</a> itself is not open-sourced.
+            </p>
+
+            <p>
+              It is worth noting that Rodin:
+              <ol>
+                <li>is trained on <u>proprietary internal datasets</u></li>
+                <li>originates from CLAY, which was initially trained on <u>256 A800 GPUs for 15 days</u></li>
+                <li>has <u>undergone months of updates</u> incorporating sophisticated techniques such as RLHF</li>
+                <li>
+                  employs a complex generation <u>pipeline composed of multiple distinct models</u>
+                  (text-to-image, image-to-raw 3D, 3D object captioning and attribute prediction,
+                  3D geometry refinement, PBR material generation and refinement, etc.)
+                </li>
+                <li>take <u>about 1 minute</u> to generate a 3D object though its pipeline</li>
+              </ol>
+            </p>
+
+            <p>
+              Despite these extensive resources and refinement steps, <a href="https://hyperhuman.deemos.com/rodin">Rodin (Gen-1 RLHF V0.9)</a> still:
+              <ul>
+                <li>struggles to generate <u>intricate and precise structures</u> such as leaves and fur</li>
+                <li>often fails to faithfully adhere to the provided <u>image and text conditions</u></li>
+              </ul>
+
+              In contrast, our method is <b>trained on <u>open-source datasets</u> using only <u>8 A100 GPUs over 2~5 days</u></b>,
+              demonstrating greater efficiency and accessibility.
+              Moreover, we believe incorporating refinement stages in the proposed method is a promising direction for future exploration.
+            </p>
+          </div>
+
+          <div style="text-align:center">
+            <table style="width: 100%">
+              <tbody>
+                <tr class="result-row">
+                  <td style="width: 37%; vertical-align: top; text-align: center;">
+                    <h3>Rodin Stage-1</h3>
+                    <img src="./static/images/rodin/raw1.png" style="width: 80%; margin: auto;">
+                  </td>
+                  <td style="width: 37%; vertical-align: top; text-align: center;">
+                    <h3>Rodin Final</h3>
+                    <img src="./static/images/rodin/1.png" style="width: 80%; margin: auto;">
+                  </td>
+                  <td style="width: 26%; vertical-align: top; text-align: center;">
+                    <h3 style="color: red; font-weight: bold;">Ours (1~2s)</h3>
+                    <video src="./static/images/rodin/1.mp4" autoplay loop muted style="width: 80%; margin: auto;"></video>
+                  </td>
+                </tr>
+                <tr class="prompt-row" style="font-size: 20px;">
+                  <td colspan="3">Prompt: "A fragrant pine Christmas wreath"</td>
+                </tr>
+
+                <tr class="empty-row"><td colspan="3"></td></tr>
+
+                <tr class="result-row">
+                  <td style="width: 37%; vertical-align: top; text-align: center;">
+                    <h3>Rodin Stage-1</h3>
+                    <img src="./static/images/rodin/raw2.png" style="width: 80%; margin: auto;">
+                  </td>
+                  <td style="width: 37%; vertical-align: top; text-align: center;">
+                    <h3>Rodin Final</h3>
+                    <img src="./static/images/rodin/2.png" style="width: 80%; margin: auto;">
+                  </td>
+                  <td style="width: 26%; vertical-align: top; text-align: center;">
+                    <h3 style="color: red; font-weight: bold;">Ours (1~2s)</h3>
+                    <video src="./static/images/rodin/2.mp4" autoplay loop muted style="width: 80%; margin: auto;"></video>
+                  </td>
+                </tr>
+                <tr class="prompt-row" style="font-size: 20px;">
+                  <td colspan="3">Prompt: "A faux-fur leopard print hat"</td>
+                </tr>
+
+                <tr class="empty-row"><td colspan="3"></td></tr>
+
+                <tr class="result-row">
+                  <td style="width: 37%; vertical-align: top; text-align: center;">
+                    <h3>Rodin Stage-1</h3>
+                    <img src="./static/images/rodin/raw3.png" style="width: 80%; margin: auto;">
+                  </td>
+                  <td style="width: 37%; vertical-align: top; text-align: center;">
+                    <h3>Rodin Final</h3>
+                    <img src="./static/images/rodin/3.png" style="width: 80%; margin: auto;">
+                  </td>
+                  <td style="width: 26%; vertical-align: top; text-align: center;">
+                    <h3 style="color: red; font-weight: bold;">Ours (1~2s)</h3>
+                    <video src="./static/images/rodin/3.mp4" autoplay loop muted style="width: 80%; margin: auto;"></video>
+                  </td>
+                </tr>
+                <tr class="prompt-row" style="font-size: 20px;">
+                  <td colspan="3">Input Image + Prompt: "A sculpture"</td>
+                </tr>
+
+                <tr class="empty-row"><td colspan="3"></td></tr>
+
+                <tr class="result-row">
+                  <td style="width: 37%; vertical-align: top; text-align: center;">
+                    <h3>Rodin Stage-1</h3>
+                    <img src="./static/images/rodin/raw4.png" style="width: 80%; margin: auto;">
+                  </td>
+                  <td style="width: 37%; vertical-align: top; text-align: center;">
+                    <h3>Rodin Final</h3>
+                    <img src="./static/images/rodin/4.png" style="width: 80%; margin: auto;">
+                  </td>
+                  <td style="width: 26%; vertical-align: top; text-align: center;">
+                    <h3 style="color: red; font-weight: bold;">Ours (1~2s)</h3>
+                    <video src="./static/images/rodin/4.mp4" autoplay loop muted style="width: 80%; margin: auto;"></video>
+                  </td>
+                </tr>
+                <tr class="prompt-row" style="font-size: 20px;">
+                  <td colspan="3">Input Image + Prompt: "<a style="color: red;">A mask</a>"</td>
+                </tr>
+
+              </tbody>
+            </table>
+          </div>
+
+          <h3 class="title is-4 has-text-centered" style="margin-top: 50px;">
+            B. Compared with Amortized SDS-based method, <a href="https://research.nvidia.com/labs/toronto-ai/LATTE3D">LATTE3D</a>
+          </h3>
+
+          <div class="content has-text-justified">
+            <p>
+              Results of LATTE3D are taken from <a href="https://research.nvidia.com/labs/toronto-ai/LATTE3D">its project page</a>.
+            </p>
+            <p>
+              Our results demonstrate <u>competitive visual quality with less over-saturation</u> compared to the SDS-based MVDream,
+              while achieving <u>significantly faster inference speed</u>.
+              Although our method is slightly slower than the feed-forward (non-generative) approach LATTE3D,
+              it offers <u>better alignment with text prompts</u>.
+            </p>
+          </div>
+
+          <div style="text-align:center">
+            <table style="width: 100%">
+              <tbody>
+                <tr class="result-row">
+                  <td style="width: 84.75%; vertical-align: top;">
+                    <video src="./static/images/latte3d/gpt101k_unseen_df_prompts.mp4" autoplay loop muted style="width: 100%;"></video>
+                  </td>
+                  <td style="width: 1%; vertical-align: top; border-left: 1px solid #000;"></td>
+                  <td style="width: 14.25%; vertical-align: top;">
+                    <h3 style="text-align: center; color: red; font-weight: bold;">Ours (1~2s)</h3>
+                    <div style="display: flex; flex-direction: column; height: 100%;">
+                      <video src="./static/images/latte3d/1.mp4" autoplay loop muted style="flex: 1;"></video>
+                      <video src="./static/images/latte3d/2.mp4" autoplay loop muted style="flex: 1;"></video>
+                      <video src="./static/images/latte3d/3.mp4" autoplay loop muted style="flex: 1;"></video>
+                      <video src="./static/images/latte3d/4.mp4" autoplay loop muted style="flex: 1;"></video>
+                      <video src="./static/images/latte3d/5.mp4" autoplay loop muted style="flex: 1;"></video>
+                      <video src="./static/images/latte3d/6.mp4" autoplay loop muted style="flex: 1;"></video>
+                      <video src="./static/images/latte3d/7.mp4" autoplay loop muted style="flex: 1;"></video>
+                      <video src="./static/images/latte3d/8.mp4" autoplay loop muted style="flex: 1;"></video>
+                      <video src="./static/images/latte3d/9.mp4" autoplay loop muted style="flex: 1;"></video>
+                      <video src="./static/images/latte3d/10.mp4" autoplay loop muted style="flex: 1;"></video>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 class="title is-4 has-text-centered" style="margin-top: 50px;">
+            C. Compared with SDS-based method, <a href="https://taoranyi.com/gaussiandreamer">GaussianDreamer</a>
+          </h3>
+
+          <div class="content has-text-justified">
+            <p>
+              Results of GaussianDreamer are taken from <a href="https://taoranyi.com/gaussiandreamer">its project page</a>.
+            </p>
+            <p>
+              Our results demonstrate <u>competitive visual quality with less over-saturation</u> compared to the SDS-based GaussianDreamer,
+              while achieving <u>significantly faster inference speed</u>.
+              Similar to GaussianDreamer that use Shap-E to generate initial point clouds,
+              our <u>generated 3D Gaussians can also be used as input to the SDS-based methods</u> for further refinement,
+              which could be a promising direction for future research.
+            </p>
+          </div>
+
+          <div style="text-align:center">
+            <table style="width: 100%">
+              <tbody>
+
+                <tr class="result-row">
+                  <td>GaussianDreamer (<b>15min</b>)</td>
+                  <td style="color: red; font-weight: bold;">Ours (1~2s)</td>
+                  <td>GaussianDreamer (<b>15min</b>)</td>
+                  <td style="color: red; font-weight: bold;">Ours (1~2s)</td>
+                </tr>
+                <tr class="result-row">
+                  <td><video src="./static/images/sds/1.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/sds/ours_1.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/sds/2.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/sds/ours_2.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                </tr>
+                <tr class="prompt-row" style="font-size: 20px;">
+                  <td colspan="2">Viking axe, fantasy, weapon,<br> blender, 8k, HD</td>
+                  <td colspan="2">Flamethrower, with fire, scifi, cyberpunk, photorealistic, 8K, HD</td>
+                </tr>
+
+                <tr class="empty-row"><td colspan="3"></td></tr>
+
+                <tr class="result-row">
+                  <td><video src="./static/images/sds/3.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/sds/ours_3.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/sds/4.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/sds/ours_4.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                </tr>
+                <tr class="prompt-row" style="font-size: 20px;">
+                  <td colspan="2">A freshly baked loaf of sourdough<br> bread on a cutting board</td>
+                  <td colspan="2">A zoomed out DSLR photo of<br> an amigurumi motorcycle</td>
+                </tr>
+
+              </tbody>
+            </table>
+          </div>
+
+          <h3 class="title is-4 has-text-centered" style="margin-top: 50px;">
+            D. Generation of Very Thin Objects
+          </h3>
+
+          <div class="content has-text-justified">
+            <p>
+              To evaluate the 3D consistency of our generated multi-view Gaussian latents,
+              we take prompts from <a href="https://t3bench.com">T3Bench</a> or generated by <a href="https://chatgpt.com">ChatGPT</a> that describe very thin objects.
+              The results demonstrate that our method can generate 3D coherent multi-view splatter images for thin objects
+              without obvious artifacts or distortions.
+            </p>
+          </div>
+
+          <div style="text-align:center">
+            <table style="width: 100%">
+              <tbody>
+
+                <tr class="result-row">
+                  <td><video src="./static/images/thin/1.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/thin/2.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/thin/3.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/thin/4.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                </tr>
+                <tr class="prompt-row">
+                  <td>A delicate battle axe with an ultrathin, sharp blade and an intricately carved wooden handle</td>
+                  <td>A slender battle axe with a crescent-shaped blade and a long, narrow shaft</td>
+                  <td>Coffee cup with<br> many holes</td>
+                  <td>A rustic, weathered bookshelf with built-in storage compartments and ties of evenly shaped shelves</td>
+                </tr>
+
+                <tr class="empty-row"><td colspan="3"></td></tr>
+
+                <tr class="result-row">
+                  <td><video src="./static/images/thin/5.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/thin/6.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/thin/7.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                  <td><video src="./static/images/thin/8.mp4" autoplay loop muted style="width: 100%; height: auto;"></video></td>
+                </tr>
+                <tr class="prompt-row">
+                  <td>A sleek combat axe with a razor-edged blade and a slim, ergonomic handle designed for swift strikes</td>
+                  <td>A shimmering emerald pendant necklace</td>
+                  <td>A delicate, handmade<br> lace doily</td>
+                  <td>An old bronze ship's wheel</td>
+                </tr>
+
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- Section -3: Related Links -->
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column is-full-width">
+
+          <h2 class="title is-3 has-text-centered">🌐&nbsp;&nbsp; Related Links &nbsp;&nbsp;🌐</h2>
+
+          <h3 class="title is-4">Native 3D Generative Models</h3>
+          <div class="content has-text-justified">
+            <ul>
+              <li>
+                <a href="https://3dtopia.github.io/3DTopia-XL">
+                  [ArXiv'2409] 3DTopia-XL: Scaling High-quality 3D Asset Generation via Primitive Diffusion
+                </a>
+              </li>
+              <li>
+                <a href="https://nju-3dv.github.io/projects/Direct3D">
+                  [NeurIPS'24] Direct3D: Scalable Image-to-3D Generation via 3D Latent Diffusion Transformer
+                </a>
+              </li>
+              <li>
+                <a href="https://gaussiancube.github.io">
+                  [NeurIPS'24] GaussianCube: A Structured and Explicit Radiance Representation for 3D Generative Modeling
+                </a>
+              </li>
+              <li>
+                <a href="https://sotamak1r.github.io/gvgen">
+                  [ECCV'24] GVGEN: Text-to-3D Generation with Volumetric Representation
+                </a>
+              </li>
+              <li>
+                <a href="https://nirvanalan.github.io/projects/ln3diff">
+                  [ECCV'24] LN3Diff: Scalable Latent Neural Fields Diffusion for Speedy 3D Generation
+                </a>
+              </li>
+              <li>
+                <a href="https://sites.google.com/view/clay-3dlm">
+                  [SIGGRAPH'24] CLAY: A Controllable Large-scale Generative Model for Creating High-quality 3D Assets
+                </a>
+              </li>
+              <li>
+                <a href="https://direct-3d.github.io">
+                  [CVPR'24] DIRECT-3D: Learning Direct Text-to-3D Generation on Massive Noisy 3D Data
+                </a>
+              </li>
+              <li>
+                <a href="https://sudo-ai-3d.github.io/One2345plus_page">
+                  [CVPR'24] One-2-3-45++: Fast Single Image to 3D Objects with Consistent Multi-View Generation and 3D Diffusion
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <h3 class="title is-4">Rendering-based 3D (Generative or Reconstruction) Models</h3>
+          <div class="content has-text-justified">
+            <ul>
+              <li>
+                <a href="https://junlinhan.github.io/projects/vfusion3d.html">
+                  [ECCV'24] VFusion3D: Learning Scalable 3D Generative Models from Video Diffusion Models
+                </a>
+              </li>
+              <li>
+                <a href="https://github.com/VAST-AI-Research/TripoSR">
+                  [ArXiv'2403] TripoSR: Fast 3D Object Reconstruction from a Single Image
+                </a>
+              </li>
+              <li>
+                <a href="https://zouzx.github.io/TriplaneGaussian">
+                  [CVPR'24] Triplane Meets Gaussian Splatting: Fast and Generalizable Single-View 3D Reconstruction with Transformers
+                </a>
+              </li>
+              <li>
+                <a href="https://justimyhxu.github.io/projects/dmv3d">
+                  [ICLR'24] DMV3D:Denoising Multi-View Diffusion using 3D Large Reconstruction Model
+                </a>
+              </li>
+              <li>
+                <a href="https://yiconghong.me/LRM">
+                  [ICLR'24] LRM: Large Reconstruction Model for Single Image to 3D
+                </a>
+              </li>
+              <li>
+                <a href="https://szymanowiczs.github.io/viewset-diffusion">
+                  [ICCV'23] Viewset Diffusion: (0-)Image-Conditioned 3D Generative Models from 2D Data
+                </a>
+              </li>
+              <li>
+                <a href="https://github.com/facebookresearch/holo_diffusion">
+                  [CVPR'23] HoloDiffusion: Training a 3D diffusion model using 2D Images
+                </a>
+              </li>
+              <li>
+                <a href="https://github.com/Anciukevicius/RenderDiffusion">
+                  [CVPR'23] RenderDiffusion: Image Diffusion for 3D Reconstruction, Inpainting and Generation
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <h3 class="title is-4">Reconstruction-based 3D Generative Models</h3>
+          <div class="content has-text-justified">
+            <ul>
+              <li>
+                <a href="https://meshformer3d.github.io">
+                  [NeurIPS'24] MeshFormer: High-Quality Mesh Generation with 3D-Guided Reconstruction Model
+                </a>
+              </li>
+              <li>
+                <a href="https://assetgen.github.io">
+                  [NeurIPS'24] Meta 3D AssetGen: Text-to-Mesh Generation with High-Quality Geometry, Texture, and PBR Materials
+                </a>
+              </li>
+              <li>
+                <a href="https://apchenstu.github.io/LaRa">
+                  [ECCV'24] LaRa: Efficient Large-Baseline Radiance Fields
+                </a>
+              </li>
+              <li>
+                <a href="https://github.com/TencentARC/InstantMesh">
+                  [ArXiv'2404] InstantMesh: Efficient 3D Mesh Generation from a Single Image with Sparse-view Large Reconstruction Models
+                </a>
+              </li>
+              <li>
+                <a href="https://justimyhxu.github.io/projects/grm">
+                  [ECCV'24] GRM: Large Gaussian Reconstruction Model for Efficient 3D Reconstruction and Generation
+                </a>
+              </li>
+              <li>
+                <a href="https://ml.cs.tsinghua.edu.cn/~zhengyi/CRM">
+                  [ECCV'24] CRM: Single Image to 3D Textured Mesh with Convolutional Reconstruction Model
+                </a>
+              </li>
+              <li>
+                <a href="https://me.kiui.moe/lgm">
+                  [ECCV'24] LGM: Large Multi-View Gaussian Model for High-Resolution 3D Content Creation
+                </a>
+              </li>
+              <li>
+                <a href="https://jiahao.ai/instant3d">
+                  [ICLR'24] Instant3D: Fast Text-to-3D with Sparse-View Generation and Large Reconstruction Model
+                </a>
+              </li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section -2 BibTeX -->
+  <section class="section" id="BibTeX">
+    <div class="container is-max-desktop content">
+      <h2 class="title is-3 has-text-centered">📚&nbsp;&nbsp; BibTeX &nbsp;&nbsp;📚</h2>
+      <div class="content has-text-justified">
+
+        <p>
+          If you find our work helpful, please consider citing:
+        </p>
+        <pre>
+          <code>
+@inproceedings{lin2025diffsplat,
+  title={DiffSplat: Repurposing Image Diffusion Models for Scalable 3D Gaussian Splat Generation},
+  author={Lin, Chenguo and Pan, Panwang and Yang, Bangbang and Li, Zeming and Mu, Yadong},
+  booktitle={International Conference on Learning Representations (ICLR)},
+  year={2025}
+}
+          </code>
+        </pre>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Section -1: Footer -->
+  <footer class="footer">
+    <div class="container">
+
+      <!-- Icon Links -->
+      <div class="content has-text-centered">
+        <a class="icon-link" href="mailto:chenguolin@stu.pku.edu.cn" class="external-link" disabled>
+          <i class="fas fa-envelope"></i>
+        </a> &nbsp;
+        <a class="icon-link" href="https://arxiv.org/pdf/2501.16764.pdf" class="external-link" disable>
+          <i class="fas fa-file-pdf"></i>
+        </a> &nbsp;
+        <a class="icon-link" href="https://github.com/chenguolin/DiffSplat" class="external-link" disabled>
+          <i class="fab fa-github"></i>
+        </a> &nbsp;
+        <a class="icon-link" href="https://huggingface.co/chenguolin/DiffSplat" class="external-link" disabled>
+          <i class="fas fa-database"></i>
+        </a><!--  &nbsp; -->
+        <!-- <a class="icon-link" href="https://huggingface.co/space/chenguolin/DiffSplat" class="external-link" disabled>
+          <i class="fas fa-magic"></i> -->
+        </a>
+      </div>
+
+      <!-- Copyright -->
+      <div class="columns is-centered">
+        <div class="column is-8">
+          <div class="content">
+            <p style="text-align: center">
+              Website template is borrowed from <a href="https://nerfies.github.io">Nerfies</a>.
+              Thanks for their effort.
+            </p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </footer>
+
+</body>
+
+</html>
